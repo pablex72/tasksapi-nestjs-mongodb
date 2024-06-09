@@ -13,7 +13,7 @@ export class TasksService {
     }
 
     findAll() {
-        this.taskModel.find();
+        return this.taskModel.find();
 
     }
     async create(createTask:CreateTaskDto){
@@ -30,6 +30,6 @@ export class TasksService {
     }
 
     async update(id:string, task:UpdateTaskDto){
-        return this.taskModel.findByIdAndUpdate(id,task)
+        return this.taskModel.findByIdAndUpdate(id,task, {new:true})
     }
 }
