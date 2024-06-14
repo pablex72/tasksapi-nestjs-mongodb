@@ -1,39 +1,64 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  ConflictException,
+  NotFoundException,
+  HttpCode
+} from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from 'src/dto/create-task.dto';
 
 @Controller('tasks')
 export class TasksController {
+  constructor(private tasksService: TasksService) {}
 
-    constructor(private tasksService: TasksService){}
+  // creating routes get post, delete
+  @Get()
+  findAll() {
+    return this.tasksService.findAll();
+  }
 
-    // creating routes get post, delete
-    @Get()
-    findAll(){
-        return this.tasksService.findAll();
-    }
-    
-    // /tasks/100
-    @Get(':id')
-    findOne(@Param('id') id: string){
-        return this.tasksService.findOnde(id)
-    }
+  // /tasks/100
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
 
-    @Post()
-    create(@Body() body: CreateTaskDto){
-        return this.tasksService.create(body)
-    }
+    const task = await this.tasksService.findOnde(id);
+    if(!task) throw new NotFoundException('Task not found');
+    return task;
 
-    @Delete(':id')
-    delete(@Param('id') id: string){
-        // console.log(id)
-        return this.tasksService.delete(id);
-    }
-    
-    @Put('id')
-    update(@Param('id') id: string, @Body() body:any){
-        // console.log(id,body)
-        return this.tasksService.update(id,body)
-    }
+  }
 
+  @Post()
+  async create(@Body() body: CreateTaskDto) {
+    try {
+      return await this.tasksService.create(body);
+    } catch (error) {
+      if (error.code === 11000) {
+        throw new ConflictException('Task already exists');
+      }
+      throw error;
+    }
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  async delete(@Param('id') id: string) {
+    // console.log(id)
+    const task = await this.tasksService.delete(id);
+    if(!task) throw new NotFoundException('Task not found');
+    return task;
+  }
+
+  @Put('id')
+  async update(@Param('id') id: string, @Body() body: any) {
+    // console.log(id,body)
+    const task = await this.tasksService.update(id, body);
+    if(!task) throw new NotFoundException('Task not found');
+    return task;
+  }
 }
